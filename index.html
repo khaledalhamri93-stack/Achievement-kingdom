@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#132c3a">
+<title>مملكة الإنجاز — واحة البدايات</title>
+<style>
+:root{--gold:#ffd779;--cream:#fff2d1;--navy:#132c3a;--panel:#1d3a49;--line:#52717c;--green:#397e57}
+*{box-sizing:border-box}body{margin:0;background:#0e202c;color:var(--cream);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+button{font:inherit;font-weight:750;border:1px solid #f4cd76;border-radius:12px;background:linear-gradient(#438c61,#24533f);color:#fff4d7;padding:10px 13px;box-shadow:0 3px 0 #102a2a;touch-action:manipulation}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #102a2a}button:disabled{opacity:.4}
+.app{max-width:1180px;margin:auto;padding:12px}header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:5px 3px 12px}
+h1{font-size:clamp(23px,4vw,34px);margin:0;color:var(--gold);text-shadow:0 3px #5a3921}header p{margin:3px 0 0;color:#b9ccce;font-size:13px}
+.stats{display:flex;gap:7px;flex-wrap:wrap}.stat{background:#1c3847;border:1px solid var(--line);border-radius:12px;padding:7px 12px;min-width:84px;text-align:center;font-size:12px;color:#b9ccce}.stat b{display:block;font-size:19px;color:var(--gold)}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}.tabs button{background:#213e4d;border-color:#4c6976;box-shadow:none}.tabs button.active{background:#c58b39;color:#182a32}
+.view{display:none}.view.active{display:block}.layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(250px,.9fr);gap:12px}
+.scene{position:relative;border:2px solid #d4ae60;border-radius:16px;overflow:hidden;background:#243f4a}canvas{width:100%;display:block;touch-action:pan-y;image-rendering:pixelated}
+.scene-bottom{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 11px;background:#183340;font-size:12px;color:#d1e0d8}
+.panel{background:linear-gradient(145deg,#203f4e,#152d3a);border:1px solid #3f6270;border-radius:15px;padding:13px;margin-bottom:11px}
+h2{font-size:19px;color:var(--gold);margin:0 0 10px}h3{font-size:15px;color:#ffe5a2;margin:0 0 7px}.small{font-size:12px;line-height:1.75;color:#bdcdce}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.wide{width:100%;margin-top:8px}
+.notice{background:#304d4d;border:1px solid #6d9878;border-radius:11px;padding:9px;font-size:13px;line-height:1.7;margin:8px 0}
+.task{display:flex;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid #3b5964}.task:last-child{border:0}.task input{width:20px;height:20px;accent-color:#63c47b;flex-shrink:0}.desc{flex:1}.desc strong{display:block;font-size:14px}.desc span{font-size:12px;color:#b9c9ca}.pts{color:var(--gold);white-space:nowrap;font-weight:800}
+.build-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.build{background:#183441;border:1px solid #4a6874;border-radius:12px;padding:12px;text-align:center}.emoji{font-size:30px}.build p{font-size:12px;color:#bdcece;min-height:30px}.build button{width:100%;font-size:13px;padding:8px}
+input[type=number],input[type=text]{width:100%;background:#102630;color:#fff0d0;border:1px solid #55727c;border-radius:9px;padding:10px;font:inherit}
+.overlay{position:absolute;inset:0;background:#0a1a25e8;display:none;align-items:center;justify-content:center;text-align:center;padding:20px}.overlay.show{display:flex}.overlay-card{max-width:350px}
+.controls{display:flex;gap:8px;margin-top:8px}.controls button{flex:1;min-height:48px}.tip{font-size:11px;color:#9fb8bc;text-align:center;margin:8px 0 0}
+.footer{text-align:center;font-size:11px;color:#8ea8af;padding:14px}
+@media(max-width:760px){.app{padding:8px}.layout{grid-template-columns:1fr}.stats{width:100%}.stat{flex:1}.brand{width:100%}.panel{padding:11px}.scene-bottom{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand"><h1>👑 مملكة الإنجاز</h1><p>مغامرات الأبطال · أنجز في حياتك، وابنِ مملكتك!</p></div>
+<div class="stats"><div class="stat">نقاط الإنجاز<b id="points">0</b></div><div class="stat">عملات المملكة<b id="coins">20</b></div><div class="stat">وقت اللعب<b id="time">0:00</b></div></div></header>
+<nav class="tabs">
+<button class="active" data-tab="kingdom">🏰 المملكة</button><button data-tab="tasks">📜 المهام اليومية</button><button data-tab="build">🪵 البناء والتطوير</button><button data-tab="parent">🔒 ولي الأمر</button>
+</nav>
+<section class="view active" id="kingdom"><div class="layout">
+<div><div class="scene"><canvas id="game" width="960" height="500" aria-label="عالم مملكة الإنجاز المتحرك"></canvas>
+<div class="overlay" id="timeOverlay"><div class="overlay-card"><h2>🌙 انتهت مغامرة اليوم</h2><p>أحسنت! حُفظ تقدم مملكتك. خذ استراحة وعد غدًا.</p><button id="closeOverlay">العودة إلى المملكة</button></div></div>
+<div class="scene-bottom"><span>🌴 واحة البدايات · المستوى الأول</span><span id="worldHint">تحرّك واستكشف الواحة</span></div></div>
+<div class="controls"><button id="left">◀ تحرّك يسارًا</button><button id="jump">⬆ قفز</button><button id="right">تحرّك يمينًا ▶</button></div>
+<p class="tip">على الحاسوب: استخدم الأسهم أو A وD للتحرك، والمسافة للقفز. على الهاتف: استخدم الأزرار.</p></div>
+<div>
+<div class="panel"><h2>رحلتك اليوم</h2><div id="status" class="notice">أنجز مهامك الواقعية لفتح وقت المغامرة.</div><div class="row"><button id="collect">✨ جمع العملات القريبة</button><button id="startGame">▶ ابدأ المغامرة</button></div><p class="small">اجمع العملات الذهبية، واقترب من أماكن البناء، وشاهد واحتك تتطور مع كل مبنى جديد.</p></div>
+<div class="panel"><h2>خريطة الممالك</h2><div class="notice">🟢 واحة البدايات — متاحة<br>🔒 قرية التعاون — تُفتح بعد بناء منزل ومزرعة<br>🔒 غابة الحكماء — مرحلة قادمة</div><p class="small">النسخة الحالية تركّز على تطوير الواحة الأساسية. ستُضاف مراحل ومهمات استكشاف أوسع لاحقًا.</p></div>
+</div></div></section>
+<section class="view" id="tasks"><div class="panel"><h2>📜 مهام اليوم</h2><p class="small">ضع علامة بعد إنجاز المهمة في الواقع. اجعل الهدف بناء عادات طيبة لا جمع النقاط فقط.</p><div id="taskList"></div><div class="notice">يمكن لولي الأمر تعديل المهام والنقاط لتناسب عمر الطفل وروتين الأسرة.</div></div>
+<div class="panel"><h2>🎟️ استبدال النقاط بوقت اللعب</h2><p>كل <b id="rateLabel">20</b> نقطة = <b id="minutesLabel">5</b> دقائق لعب.</p><div class="row"><button id="redeem">افتح 5 دقائق</button><button id="playFromTasks">ابدأ اللعب</button></div><p class="small" id="redeemMsg">الحد اليومي: 30 دقيقة. يمكن لولي الأمر تغييره.</p></div></section>
+<section class="view" id="build"><div class="panel"><h2>🪵 بناء المملكة</h2><p class="small">أنفق عملات المملكة التي تجمعها داخل العالم. المباني تظهر في المشهد وتتغير الواحة مع تقدمك.</p><div class="build-grid" id="buildGrid"></div></div></section>
+<section class="view" id="parent"><div class="panel"><h2>🔒 إعدادات ولي الأمر</h2><p class="small">نسخة تجريبية محلية. رمز الدخول الافتراضي 1234؛ هذه ليست حماية أمنية حقيقية.</p><div class="row"><div><label>رمز ولي الأمر</label><input id="pin" type="number" placeholder="أدخل 1234"></div><div style="align-self:end"><button id="unlock">فتح الإعدادات</button></div></div>
+<div id="parentControls" style="display:none;margin-top:14px"><div class="row"><div><label>الحد اليومي (دقيقة)</label><input id="dailyLimit" type="number" min="5" max="120"></div><div><label>النقاط لكل 5 دقائق</label><input id="pointsRate" type="number" min="5" max="100"></div></div><h3 style="margin-top:14px">نقاط المهام</h3><div id="taskEditor"></div><button class="wide" id="saveSettings">حفظ الإعدادات</button><button class="wide" id="resetDay" style="background:linear-gradient(#94613d,#674126)">إعادة ضبط تقدم اليوم</button></div></div></section>
+<div class="footer">نموذج أولي · الحفظ محلي على هذا الجهاز · لا توجد إعلانات أو مشتريات</div>
+</div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const baseTasks=[
+{id:'prayer',name:'المحافظة على الصلاة بحسب روتين الأسرة',hint:'عبادة وقيمة',points:10},
+{id:'quran',name:'قراءة القرآن أو حفظ آية',hint:'وقت قصير مناسب للعمر',points:10},
+{id:'family',name:'مساعدة أحد أفراد الأسرة',hint:'مبادرة طيبة',points:10},
+{id:'study',name:'إنجاز الواجب المدرسي',hint:'تعلم ومسؤولية',points:15},
+{id:'tidy',name:'ترتيب الغرفة أو الحقيبة',hint:'نظام ونظافة',points:5},
+{id:'move',name:'نشاط بدني مناسب',hint:'حركة وصحة',points:5}
+];
+let saved=null;try{saved=JSON.parse(localStorage.getItem('kingdomAchievementV2')||'null')}catch(e){}
+let state=saved||{points:0,coins:20,time:0,dailyUsed:0,limit:30,rate:20,minutesPerRedeem:5,tasks:{},buildings:{},x:110,day:new Date().toDateString()};
+if(state.day!==new Date().toDateString()){state.day=new Date().toDateString();state.points=0;state.time=0;state.dailyUsed=0;state.tasks={};}
+let tasks=baseTasks.map(t=>({...t,points:state.taskPoints?.[t.id]??t.points}));
+let active=false, lastTick=Date.now(), anim=0, camera=0, jumping=0, collected=new Set(), coins=[220,360,515,720,940,1120,1330,1510,1700,1870], worldWidth=2050;
+const c=$('game'),ctx=c.getContext('2d');
+function save(){state.taskPoints=Object.fromEntries(tasks.map(t=>[t.id,t.points]));localStorage.setItem('kingdomAchievementV2',JSON.stringify(state));stats();}
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function stats(){$('points').textContent=state.points;$('coins').textContent=state.coins;$('time').textContent=fmt(state.time);$('rateLabel').textContent=state.rate;$('minutesLabel').textContent=state.minutesPerRedeem;$('dailyLimit').value=state.limit;$('pointsRate').value=state.rate;}
+function say(s){$('status').textContent=s}
+function switchTab(t){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===t))}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+function renderTasks(){$('taskList').innerHTML=tasks.map(t=>`<label class="task"><input type="checkbox" data-task="${t.id}" ${state.tasks[t.id]?'checked':''}><span class="desc"><strong>${t.name}</strong><span>${t.hint}</span></span><span class="pts">+${t.points} ★</span></label>`).join('');
+$('taskList').querySelectorAll('input').forEach(i=>i.onchange=()=>{let t=tasks.find(a=>a.id===i.dataset.task);if(i.checked&&!state.tasks[t.id]){state.tasks[t.id]=true;state.points+=t.points;say(`أحسنت! حصلت على ${t.points} نقاط إنجاز.`)}else if(!i.checked&&state.tasks[t.id]){state.tasks[t.id]=false;state.points=Math.max(0,state.points-t.points)}save();renderTasks();});}
+const buildings=[
+{id:'home',name:'منزل',emoji:'🏠',cost:20,desc:'بيت جديد لسكان الواحة'},
+{id:'farm',name:'مزرعة',emoji:'🌱',cost:30,desc:'حديقة صغيرة تملأ الواحة بالخضرة'},
+{id:'bridge',name:'جسر',emoji:'🌉',cost:40,desc:'معبر خشبي فوق الماء'},
+{id:'library',name:'مكتبة',emoji:'📚',cost:50,desc:'مكان للقراءة والمعرفة'},
+{id:'tower',name:'برج الحراسة',emoji:'🗼',cost:60,desc:'برج يطل على أطراف المملكة'},
+{id:'well',name:'بئر الواحة',emoji:'⛲',cost:25,desc:'ماء عذب وسط الصحراء'}
+];
+function renderBuild(){$('buildGrid').innerHTML=buildings.map(b=>`<div class="build"><div class="emoji">${b.emoji}</div><h3>${b.name} ${state.buildings[b.id]?'✓':''}</h3><p>${state.buildings[b.id]?'تم البناء':b.desc}</p><button data-build="${b.id}" ${state.buildings[b.id]||state.coins<b.cost?'disabled':''}>${state.buildings[b.id]?'مبني ✓':'ابنِ · '+b.cost+' عملة'}</button></div>`).join('');
+$('buildGrid').querySelectorAll('button').forEach(bu=>bu.onclick=()=>{let b=buildings.find(x=>x.id===bu.dataset.build);if(!b||state.coins<b.cost||state.buildings[b.id])return;state.coins-=b.cost;state.buildings[b.id]=true;say(`رائع! اكتمل بناء ${b.name}. انظر إلى الواحة!`);save();renderBuild();draw();});}
+function redeem(){if(state.dailyUsed>=state.limit){$('redeemMsg').textContent='بلغت الحد اليومي. خذ استراحة وعد غدًا.';return}if(state.points<state.rate){$('redeemMsg').textContent=`تحتاج إلى ${state.rate-state.points} نقطة إضافية.`;return}let m=Math.min(state.minutesPerRedeem,state.limit-state.dailyUsed);state.points-=state.rate;state.time+=m*60;state.dailyUsed+=m;save();$('redeemMsg').textContent=`تم فتح ${m} دقائق لعب.`;say('وقت المغامرة جاهز!');}
+$('redeem').onclick=redeem;$('startGame').onclick=$('playFromTasks').onclick=()=>{if(state.time<=0){say('افتح وقت اللعب أولًا من نقاط الإنجاز.');switchTab('tasks');return}active=true;lastTick=Date.now();switchTab('kingdom');say('انطلقت المغامرة! استكشف الواحة.');};
+function move(d){if(!active||state.time<=0){say('افتح وقت اللعب أولًا من نقاط الإنجاز.');return}state.x=Math.max(35,Math.min(worldWidth-35,state.x+d));camera=Math.max(0,Math.min(worldWidth-c.width,state.x-c.width*.38));save();}
+$('left').onpointerdown=()=>move(-45);$('right').onpointerdown=()=>move(45);$('jump').onclick=()=>{if(active&&state.time>0)jumping=18;else say('افتح وقت اللعب أولًا لتبدأ القفز والاستكشاف.')};
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key.toLowerCase()==='a')move(-28);if(e.key==='ArrowRight'||e.key.toLowerCase()==='d')move(28);if(e.code==='Space'){$('jump').click()}});
+$('collect').onclick=()=>{if(!active||state.time<=0){say('ابدأ المغامرة أولًا.');return}let n=coins.findIndex((x,i)=>!collected.has(i)&&Math.abs(x-state.x)<75);if(n>=0){collected.add(n);state.coins+=5;say('وجدت عملات ذهبية! +5 عملات للمملكة.');save();renderBuild()}else say('اقترب من عملة ذهبية في العالم ثم اجمعها.');};
+$('unlock').onclick=()=>{if($('pin').value==='1234'){$('parentControls').style.display='block';say('فُتحت الإعدادات التجريبية.')}else say('رمز غير صحيح.')};
+function editor(){$('taskEditor').innerHTML=tasks.map(t=>`<div class="task"><span class="desc">${t.name}</span><input id="pt-${t.id}" type="number" min="1" max="50" value="${t.points}" style="max-width:80px"></div>`).join('')}
+$('saveSettings').onclick=()=>{state.limit=Math.max(5,Math.min(120,Number($('dailyLimit').value)||30));state.rate=Math.max(5,Math.min(100,Number($('pointsRate').value)||20));tasks.forEach(t=>t.points=Math.max(1,Math.min(50,Number($('pt-'+t.id).value)||t.points)));save();renderTasks();renderBuild();editor();say('تم حفظ الإعدادات.')};
+$('resetDay').onclick=()=>{if(confirm('إعادة ضبط تقدم اليوم؟')){state.points=0;state.time=0;state.dailyUsed=0;state.tasks={};save();renderTasks();say('تمت إعادة ضبط تقدم اليوم.')}};
+$('closeOverlay').onclick=()=>{$('timeOverlay').classList.remove('show');active=false;switchTab('kingdom')};
+function rect(x,y,w,h,col){ctx.fillStyle=col;ctx.fillRect(Math.round(x),Math.round(y),w,h)}
+function palm(x,y,s){rect(x-4*s,y-62*s,8*s,63*s,'#805638');ctx.fillStyle='#23694d';for(let k=0;k<5;k++){ctx.save();ctx.translate(x,y-62*s);ctx.rotate((k-2)*.48);ctx.beginPath();ctx.ellipse(23*s,0,28*s,7*s,0,0,Math.PI*2);ctx.fill();ctx.restore()}rect(x-9*s,y-9*s,4*s,5*s,'#b36a36');rect(x+5*s,y-11*s,4*s,5*s,'#b36a36')}
+function building(x,y,type){if(type==='home'){rect(x,y-40,58,40,'#e8c58a');ctx.fillStyle='#9a5536';ctx.beginPath();ctx.moveTo(x-7,y-39);ctx.lineTo(x+29,y-66);ctx.lineTo(x+65,y-39);ctx.fill();rect(x+23,y-22,14,22,'#654332');rect(x+7,y-29,9,10,'#8bc3bd')}
+if(type==='farm'){rect(x,y-8,85,8,'#775337');for(let i=0;i<6;i++){rect(x+i*14,y-19-(i%2)*4,4,15,'#3c7d43');rect(x+i*14+4,y-16-(i%2)*4,7,3,'#9bc65d')}}
+if(type==='library'){rect(x,y-48,66,48,'#b88b58');ctx.fillStyle='#7b493c';ctx.beginPath();ctx.moveTo(x-5,y-47);ctx.lineTo(x+33,y-72);ctx.lineTo(x+71,y-47);ctx.fill();for(let i=0;i<3;i++){rect(x+9+i*18,y-33,11,13,'#8bc2bd')}rect(x+27,y-18,13,18,'#664633')}
+if(type==='tower'){rect(x+10,y-75,28,75,'#b7a17b');rect(x+5,y-82,38,10,'#784b38');for(let i=0;i<4;i++)rect(x+14+i*6,y-68,3,9,'#634c3b')}
+if(type==='well'){ctx.strokeStyle='#8b6346';ctx.lineWidth=7;ctx.beginPath();ctx.ellipse(x+25,y-5,28,9,0,0,Math.PI*2);ctx.stroke();rect(x+1,y-24,5,20,'#8b6346');rect(x+44,y-24,5,20,'#8b6346');rect(x+2,y-26,46,5,'#8b6346');ctx.fillStyle='#4ba5b1';ctx.beginPath();ctx.ellipse(x+25,y-5,20,5,0,0,Math.PI*2);ctx.fill()}
+}
+function draw(){
+let w=c.width,h=c.height;anim+=.018;ctx.clearRect(0,0,w,h);
+let sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#5ba9cc');sky.addColorStop(.58,'#f2c47e');sky.addColorStop(1,'#e9c58b');ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
+// sun and slow clouds
+ctx.fillStyle='#ffe6a0';ctx.beginPath();ctx.arc(790-camera*.05,74,34,0,Math.PI*2);ctx.fill();
+for(let i=0;i<4;i++){let x=((i*290+90+anim*9-camera*.12)%(w+180))-70,y=45+(i%3)*35;ctx.fillStyle='#fff0d9';ctx.fillRect(x,y,70,12);ctx.fillRect(x+12,y-10,27,18);ctx.fillRect(x+38,y-5,24,15)}
+// mountains
+for(let i=0;i<7;i++){let x=i*190-camera*.23;ctx.fillStyle=i%2?'#c18d62':'#d4a36d';ctx.beginPath();ctx.moveTo(x-30,310);ctx.lineTo(x+85,150+(i%3)*25);ctx.lineTo(x+200,310);ctx.fill()}
+// dunes
+ctx.fillStyle='#d6a76d';ctx.beginPath();ctx.moveTo(0,310);for(let x=0;x<=w+10;x+=10)ctx.lineTo(x,270+Math.sin((x+camera*.35)/100)*24);ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.fill();
+ctx.fillStyle='#e7c184';ctx.beginPath();ctx.moveTo(0,350);for(let x=0;x<=w+10;x+=10)ctx.lineTo(x,318+Math.sin((x+camera*.55)/125)*18);ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.fill();
+// oasis water with ripples
+ctx.fillStyle='#378f99';ctx.fillRect(0,388,w,112);for(let i=0;i<12;i++){let x=(i*101+anim*25)%w;ctx.fillStyle='#74c9c1';ctx.fillRect(x,405+(i%4)*17,42,3)}
+// ground and greenery
+rect(0,360,w,32,'#648b4c');rect(0,360,w,5,'#a5bd70');
+for(let i=0;i<11;i++){let wx=i*220+55, sx=wx-camera;if(sx>-70&&sx<w+70)palm(sx,359,.72+(i%3)*.13)}
+// decorative rocks and flowers
+for(let i=0;i<30;i++){let wx=i*73+35,sx=wx-camera;if(sx>-10&&sx<w+10){rect(sx,354+(i%3)*3,7,5,i%2?'#a47a55':'#e0bd7d');if(i%4===0){rect(sx+8,351,3,7,'#3e8149');rect(sx+5,351,8,3,'#e6a95b')}}}
+// buildings in world
+const positions={home:480,farm:620,library:830,tower:1120,well:960,bridge:1390};
+Object.entries(positions).forEach(([type,x])=>{if(state.buildings[type]){let sx=x-camera;if(sx>-100&&sx<w+100)building(sx,360,type)}});
+// default village house
+building(310-camera,360,'home');
+// wooden bridge if built
+if(state.buildings.bridge){let bx=positions.bridge-camera;rect(bx,390,170,9,'#80593c');for(let i=0;i<8;i++)rect(bx+i*22,385,5,18,'#ae8051');}
+// coins shimmer
+coins.forEach((wx,i)=>{if(collected.has(i))return;let x=wx-camera;if(x>-20&&x<w+20){let yy=345+Math.sin(anim*2+i)*4;ctx.fillStyle='#ffda54';ctx.beginPath();ctx.arc(x,yy,10,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#b77722';ctx.lineWidth=2;ctx.stroke();rect(x-2,yy-5,4,10,'#b77722');ctx.fillStyle='#fff0a8';ctx.fillRect(x-4,yy-6,3,3)}});
+// hero bounce
+if(jumping>0)jumping-=.55;let hy=360-Math.max(0,jumping)*5;let hx=state.x-camera;
+// shadow
+ctx.fillStyle='#4c4837aa';ctx.beginPath();ctx.ellipse(hx,362,14,4,0,0,Math.PI*2);ctx.fill();
+// pixel character
+rect(hx-10,hy-49,20,14,'#49352b');rect(hx-12,hy-41,24,16,'#d9a071');rect(hx-9,hy-38,3,3,'#322d29');rect(hx+4,hy-38,3,3,'#322d29');rect(hx-12,hy-26,24,21,'#345b7a');rect(hx-15,hy-28,30,5,'#e8c466');rect(hx-9,hy-6,7,8,'#49352b');rect(hx+3,hy-6,7,8,'#49352b');rect(hx+11,hy-24,6,13,'#b78045');
+ctx.fillStyle='#fff0c9';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.fillText('البطل',hx,hy-57);
+// level tag and prompt
+rect(14,14,194,43,'#163545dd');ctx.fillStyle='#ffdf85';ctx.font='bold 16px system-ui';ctx.textAlign='right';ctx.fillText('الواحة · المستوى 1',196,41);
+rect(0,h-30,w,30,'#163342cc');ctx.fillStyle='#fff0cf';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText(active&&state.time>0?'استكشف، اقفز، واجمع العملات الذهبية':'أنجز المهام اليومية لفتح وقت المغامرة',w/2,h-10);
+requestAnimationFrame(draw);
+}
+function tick(){let now=Date.now();if(active&&state.time>0){let el=Math.floor((now-lastTick)/1000);if(el>0){state.time=Math.max(0,state.time-el);lastTick=now;save();if(state.time===0){active=false;$('timeOverlay').classList.add('show');say('انتهى وقت اللعب اليوم. حُفظ تقدمك.')}}}else lastTick=now;requestAnimationFrame(tick)}
+renderTasks();renderBuild();editor();stats();draw();tick();
+})();
+</script>
+</body></html>
